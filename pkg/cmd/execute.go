@@ -87,6 +87,14 @@ func start(ctx context.Context, cfg *options.ServerFlags) {
 	log.Println("Global tracer created...")
 
 	setupLogger()
+
+	// Connect to MongoDB before starting the server
+	dbClient, err := ConnectToDB()
+	if err != nil {
+			log.Fatal("Failed to connect to MongoDB:", err)
+	}
+	defer dbClient.Disconnect(ctx)
+
 	waitgroup.Add(2) // Signal handler and server
 
 	go func() {
