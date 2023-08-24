@@ -1,9 +1,11 @@
 package models
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 // User - Data Model To Store user Data in
-type User struct {
-	Id         int
-	First_name string
-	Last_name  string
-	Email      string
-}
+type user struct{
+	Name string `json:"name"`
+	City string `json:"city"`
+	Age int `json:"age"`
+	}

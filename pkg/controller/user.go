@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -9,91 +10,138 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/lizzy596/golang-mongo/pkg/dao"
 	"github.com/lizzy596/golang-mongo/pkg/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UserData - The collection of Users retained in memory as a slice of structs
-var UserData []*models.User
-
-// SetupUserHandler - setup all the controller paths for Users
-func SetupUserHandler(handler *http.ServeMux) {
-	handler.HandleFunc("/users", Show)
-	handler.HandleFunc("/user/create", Create)
-	handler.HandleFunc("/user/update", Update)
-	handler.HandleFunc("/user/replace", Replace)
-	handler.HandleFunc("/user/delete", Delete)
-
-	LoadData()
+// struct for storing data
+type user struct {
+	Name string `json:name`
+	Age  int    `json:age`
+	City string `json:city`
 }
 
-// LoadData - Setup Data For Users
-func LoadData() {
-	log.Println("Load Data into Memory")
-	data, err := dao.FileLoadInData("data/MOCK_DATA.csv")
+var userCollection = db().Database("goTest").Collection("users") // get collection "users" from db() which returns *mongo.Client
+
+// Create Profile or Signup
+
+func createProfile(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json") // for adding Content-type
+
+	var person user
+	err := json.NewDecoder(r.Body).Decode(&person) // storing in person variable of type user
+	if err != nil {
+		fmt.Print(err)
+	}
+	insertResult, err := userCollection.InsertOne(context.TODO(), person)
 	if err != nil {
 		log.Fatal(err)
 	}
-	reader := csv.NewReader(bytes.NewReader(data))
-	records, err := reader.ReadAll()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for index, item := range records {
-		if index == 0 {
-			continue
-		}
-		UserData = append(UserData, &models.User{Id: index, First_name: item[1], Last_name: item[2], Email: item[3]})
-	}
+
+	fmt.Println("Inserted a single document: ", insertResult)
+	json.NewEncoder(w).Encode(insertResult.InsertedID) // return the mongodb ID of generated document
+
 }
 
-// Show - a User
-func Show(w http.ResponseWriter, r *http.Request) {
-	log.Println("Show User Data")
+// Get Profile of a particular User by Name
+
+func getUserProfile(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("["))
-	for index, data := range UserData {
-		payload, err := json.Marshal(data)
+
+	var body user
+	e := json.NewDecoder(r.Body).Decode(&body)
+	if e != nil {
+
+		fmt.Print(e)
+	}
+	var result primitive.M //  an unordered representation of a BSON document which is a Map
+	err := userCollection.FindOne(context.TODO(), bson.D{{"name", body.Name}}).Decode(&result)
+	if err != nil {
+
+		fmt.Println(err)
+
+	}
+	json.NewEncoder(w).Encode(result) // returns a Map containing document
+
+}
+
+//Update Profile of User
+
+func updateProfile(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	type updateBody struct {
+		Name string `json:"name"` //value that has to be matched
+		City string `json:"city"` // value that has to be modified
+	}
+	var body updateBody
+	e := json.NewDecoder(r.Body).Decode(&body)
+	if e != nil {
+
+		fmt.Print(e)
+	}
+	filter := bson.D{{"name", body.Name}} // converting value to BSON type
+	after := options.After                // for returning updated document
+	returnOpt := options.FindOneAndUpdateOptions{
+
+		ReturnDocument: &after,
+	}
+	update := bson.D{{"$set", bson.D{{"city", body.City}}}}
+	updateResult := userCollection.FindOneAndUpdate(context.TODO(), filter, update, &returnOpt)
+
+	var result primitive.M
+	_ = updateResult.Decode(&result)
+
+	json.NewEncoder(w).Encode(result)
+}
+
+//Delete Profile of User
+
+func deleteProfile(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)["id"] //get Parameter value as string
+
+	_id, err := primitive.ObjectIDFromHex(params) // convert params to mongodb Hex ID
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	opts := options.Delete().SetCollation(&options.Collation{}) // to specify language-specific rules for string comparison, such as rules for lettercase
+	res, err := userCollection.DeleteOne(context.TODO(), bson.D{{"_id", _id}}, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("deleted %v documents\n", res.DeletedCount)
+	json.NewEncoder(w).Encode(res.DeletedCount) // return number of documents deleted
+
+}
+
+func getAllUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var results []primitive.M                                   //slice for multiple documents
+	cur, err := userCollection.Find(context.TODO(), bson.D{{}}) //returns a *mongo.Cursor
+	if err != nil {
+
+		fmt.Println(err)
+
+	}
+	for cur.Next(context.TODO()) { //Next() gets the next document for corresponding cursor
+
+		var elem primitive.M
+		err := cur.Decode(&elem)
 		if err != nil {
 			log.Fatal(err)
 		}
-		w.Write(payload)
-		if index != len(UserData)-1 {
-			w.Write([]byte(","))
-		}
+
+		results = append(results, elem) // appending document pointed by Next()
 	}
-	w.Write([]byte("]"))
-}
-
-// Create - a New User
-func Create(w http.ResponseWriter, r *http.Request) {
-	log.Println("Create User Data")
-	newUser := &models.User{}
-	io.WriteString(w, "Create a New User")
-	bytes, err := json.Marshal(newUser)
-	if err != nil {
-		fmt.Fprintf(w, "Failed to Marshal Data from Request %s", err)
-	}
-	log.Println("Receieved Data: ", bytes)
-	UserData = append(UserData, newUser)
-	fmt.Fprintln(w, newUser)
-}
-
-// Update - a User
-func Update(w http.ResponseWriter, r *http.Request) {
-	log.Println("Update User Data")
-	io.WriteString(w, "Update a User")
-}
-
-// Replace - a current User
-func Replace(w http.ResponseWriter, r *http.Request) {
-	log.Println("Replace User Data")
-	io.WriteString(w, "Replace a current User")
-}
-
-// Delete - a User
-func Delete(w http.ResponseWriter, r *http.Request) {
-	log.Println("Delete User Data")
-	io.WriteString(w, "Delete a User")
+	cur.Close(context.TODO()) // close the cursor once stream of documents has exhausted
+	json.NewEncoder(w).Encode(results)
 }
