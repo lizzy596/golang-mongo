@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/hunter32292/go-server-example/pkg/cmd"
+	"github.com/lizzy596/golang-mongo/pkg/cmd"
 	"github.com/spf13/cobra"
 )
 

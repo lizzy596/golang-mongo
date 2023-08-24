@@ -4,37 +4,34 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func ConnectToDB() (*mongo.Client, error) {
 	// Replace with your MongoDB connection details
 	connectionString := "mongodb://mongo:27001,mongo:27002,mongo:27003/go-server"
-	//dbName := "your_database_name"
-
-	clientOptions := options.Client().ApplyURI(connectionString)
-	client, err := mongo.Connect(context.Background(), clientOptions)
+	client, err := mongo.NewClient(options.Client().ApplyURI(connectionString))
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
-
-	// Ping the server to check if the connection was successful
-	err = client.Ping(context.Background(), nil)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
-
-	fmt.Println("Connected to MongoDB successfully!")
-	return client, nil
+	defer client.Disconnect(ctx)
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		log.Fatal(err)
+	}
+	databases, err := client.ListDatabaseNames(ctx, bson.M{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(databases)
 }
 
-func main() {
-	client, err := ConnectToDB()
-	if err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
-	}
-	defer client.Disconnect(context.Background())
-
-	// Your server logic here
-}

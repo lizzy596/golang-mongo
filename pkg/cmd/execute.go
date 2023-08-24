@@ -89,11 +89,12 @@ func start(ctx context.Context, cfg *options.ServerFlags) {
 	setupLogger()
 
 	// Connect to MongoDB before starting the server
-	dbClient, err := ConnectToDB()
+	dbClient, err := database.ConnectToDB()
 	if err != nil {
 			log.Fatal("Failed to connect to MongoDB:", err)
 	}
 	defer dbClient.Disconnect(ctx)
+
 
 	waitgroup.Add(2) // Signal handler and server
 
