@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
+	"github.com/lizzy596/golang-mongo/pkg/database"
 	"github.com/hunter32292/go-server-example/pkg/options"
 	"github.com/hunter32292/go-server-example/pkg/server"
 	trace "github.com/hunter32292/go-server-example/pkg/tracer"

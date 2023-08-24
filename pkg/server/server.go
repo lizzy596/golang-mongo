@@ -9,7 +9,6 @@ import (
 
 	"github.com/hunter32292/go-server-example/pkg/controller"
 	"github.com/hunter32292/go-server-example/pkg/options"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -46,7 +45,6 @@ func run() {
 
 func setupControllers(mux *http.ServeMux) {
 	controller.SetupUserHandler(mux)
-	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/", controller.HomeHandler)
 	mux.HandleFunc("/404", controller.NotFound)
 	// Add more like so:
