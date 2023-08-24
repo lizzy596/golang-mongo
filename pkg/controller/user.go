@@ -9,8 +9,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hunter32292/go-server-example/pkg/dao"
-	"github.com/hunter32292/go-server-example/pkg/models"
+	"github.com/lizzy596/golang-mongo/pkg/dao"
+	"github.com/lizzy596/golang-mongo/pkg/models"
 )
 
 // UserData - The collection of Users retained in memory as a slice of structs
@@ -27,7 +27,7 @@ func SetupUserHandler(handler *http.ServeMux) {
 	LoadData()
 }
 
-//LoadData - Setup Data For Users
+// LoadData - Setup Data For Users
 func LoadData() {
 	log.Println("Load Data into Memory")
 	data, err := dao.FileLoadInData("data/MOCK_DATA.csv")

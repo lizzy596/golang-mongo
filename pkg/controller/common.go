@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	trace "github.com/hunter32292/go-server-example/pkg/tracer"
+	trace "github.com/lizzy596/golang-mongo/pkg/tracer"
 )
 
 // NotFound - 404 Handler

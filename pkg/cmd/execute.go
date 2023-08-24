@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/lizzy596/golang-mongo/pkg/database"
+	"github.com/lizzy596/golang-mongo/pkg/options"
+	"github.com/lizzy596/golang-mongo/pkg/server"
+	trace "github.com/lizzy596/golang-mongo/pkg/tracer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/lizzy596/golang-mongo/pkg/database"
-	"github.com/hunter32292/go-server-example/pkg/options"
-	"github.com/hunter32292/go-server-example/pkg/server"
-	trace "github.com/hunter32292/go-server-example/pkg/tracer"
 )
 
 func NewServerCommand() *cobra.Command {
@@ -91,10 +91,9 @@ func start(ctx context.Context, cfg *options.ServerFlags) {
 	// Connect to MongoDB before starting the server
 	dbClient, err := database.ConnectToDB()
 	if err != nil {
-			log.Fatal("Failed to connect to MongoDB:", err)
+		log.Fatal("Failed to connect to MongoDB:", err)
 	}
 	defer dbClient.Disconnect(ctx)
-
 
 	waitgroup.Add(2) // Signal handler and server
 

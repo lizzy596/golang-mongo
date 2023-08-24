@@ -3,7 +3,7 @@ module github.com/lizzy596/golang-mongo
 go 1.19
 
 require (
-	github.com/hunter32292/go-server-example v0.0.0-20220628214702-677c301f735a
+	github.com/lizzy596/golang-mongo v0.0.0-20220628214702-677c301f735a
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hunter32292/go-server-example/pkg/controller"
-	"github.com/hunter32292/go-server-example/pkg/options"
+	"github.com/lizzy596/golang-mongo/pkg/controller"
+	"github.com/lizzy596/golang-mongo/pkg/options"
 )
 
 var (
