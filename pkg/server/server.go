@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"github.com/gorilla/mux"
 
 	"github.com/lizzy596/golang-mongo/pkg/controller"
 	"github.com/lizzy596/golang-mongo/pkg/options"
@@ -44,8 +45,8 @@ func run() {
 }
 
 func setupControllers(mux *http.ServeMux) {
-	controller.SetupUserHandler(mux)
-	mux.HandleFunc("/", controller.HomeHandler)
+	// controller.SetupUserHandler(mux)
+	mux.HandleFunc("/createProfile", controller.createProfile)
 	mux.HandleFunc("/404", controller.NotFound)
 	// Add more like so:
 	// controller.SetupNAMEHandler(mux)
